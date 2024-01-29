@@ -1,23 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter} from "next/router";
-import allPosts from '../data/posts';
-import { Card, CardContent, CardMedia, Typography, Box } from '@mui/material';
+import { Card, Button, CardContent, CardMedia, Typography, Box, IconButton, Tooltip } from '@mui/material';
 import withLayout from '../layout/withLayout';
+import { postsService } from '../../service/postService';
+import CancelIcon from '@mui/icons-material/Remove'; // Material-UI 아이콘 가져오기
 
 
 function PostDetail() {
-    const [curPost, setCurPost] = useState(null);
+    const [curPost, setCurPost] = useState({title: '', content: '',imageUrl: '', viewCount: 0});
     const router = useRouter();
     const { id } = router.query;
 
     useEffect(() => {
-        // URL에서 id가 제대로 로드되었는지 확인
-        if(id) {
-            // url에서 받은 id는 문자열이므로, 정수로 변환
-            const post = allPosts.find(post => post.id === parseInt(id, 10));
-            setCurPost(post);
+        const fetchPost = async() => {
+            try {
+                const response = await postsService.getPost(id);
+                setCurPost(response.data);
+                console.log(response.data);
+
+                // 조회수 증가 로직
+                if (!sessionStorage.getItem(`viewed-${id}`)) {
+                    const response = await postsService.increaseViewCount(id);
+                    setCurPost(prevPost => ({ ...prevPost, viewCount: response.data.viewCount }));
+                    sessionStorage.setItem(`viewed-${id}`, 'true');
+                }
+                
+            } catch(err) {
+                console.log('게시글을 불러오는데 실패했습니다.');
+                console.error(err);
+            }
         }
-    }, [id, allPosts]);
+
+        if(router.isReady) {
+            fetchPost()
+        }
+    }, [id, router.isReady]);
+
+
+    // 메인으로 돌아가는 함수
+    const handelBack = () => {
+        router.push('/');
+    };
+
+    // 게시물 수정 페이지 이동 함수
+    const handelEdit = () => {
+        router.push(`./edit/${id}`);
+    };
+
+
+    const handleDelete = async () => {
+        const confirmDelete = window.confirm('삭제하시겠습니까?');
+    
+        if (confirmDelete) {
+            try {
+                await postsService.deletePost(id);
+                router.push('/');
+
+            } catch (error) {
+                console.error('삭제 중 오류 발생:', error);
+                alert('삭제를 실패했습니다.');
+            }
+        }
+    };
+
 
     // URL에서 id가 제대로 로드되지 않았거나 posts 배열이 undefined인 경우 처리
     if (!id || !curPost) {
@@ -37,13 +82,36 @@ function PostDetail() {
                             sx={{ objectFit: 'cover' }}
                         />
                         <CardContent>
-                            <Typography gutterBottom variant="h5" component="h2">
-                                {curPost.title}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary" component="p">
+                            <Box display="flex" alignItems="center" justifyContent="space-between">
+                                <Typography gutterBottom variant='h6' component="h6">
+                                    Post id : {id}
+                                </Typography>
+                                <Tooltip title="삭제">
+                                    <IconButton onClick={handleDelete} color="error">
+                                        <CancelIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                            <Box display="flex" alignItems="center" justifyContent="space-between">
+                                <Typography gutterBottom variant="h5" component="h2">
+                                    {curPost.title}
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                    조회 {curPost.viewCount}
+                                </Typography>
+                            </Box>
+                            <Typography variant="body1" color="textSecondary" component="p">
                                 {curPost.content}
                             </Typography>
+
+                            <Button variant="contained" color="primary" onClick={handelBack} sx={{ mt: 2 }}>
+                                메인으로 돌아가기
+                            </Button>
+                            <Button variant="contained" color="secondary" onClick={handelEdit} sx={{ mt: 2, ml: 30 }}>
+                                게시물 수정
+                            </Button>
                         </CardContent>
+                        
                     </>
                 ) : (
                     <Typography variant="body1" p={2}>

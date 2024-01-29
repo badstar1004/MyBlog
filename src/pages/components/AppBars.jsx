@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import { useRouter } from 'next/router';
-import { AppBar, Button, Grid, Toolbar, Typography } from '@mui/material';
+import { AppBar, Button, Grid, Toolbar, Typography, Link } from '@mui/material';
 
 
 function AppBars() {
@@ -27,7 +27,9 @@ function AppBars() {
                 <Grid container spacing={1} alignItems="center" justifyContent="center">
                     <Grid item xs={12} sm={true}>
                         <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: "center" }}>
+                        <Link href="/" color="inherit" style={{ textDecoration: 'none' }}>
                             이너프의 블로그
+                        </Link>
                         </Typography>
                     </Grid>
                     <Grid item xs={12} sm={true} container justifyContent="center">
