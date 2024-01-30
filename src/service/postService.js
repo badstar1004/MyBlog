@@ -34,8 +34,13 @@ export const postsService = {
         return axiosInstance.post(POST_API, postData);
     },
 
-    // 조회수 증가
+    // 조회수 증가 (PATCH /posts/{postId})
     increaseViewCount: (postId) => {
         return axiosInstance.patch(`${POST_API}/${postId}`);
+    },
+
+    // 인기글 조회 (GET /posts/highlight)
+    getPopularPosts: () => {
+        return axiosInstance.get(`${POST_API}/highlight`);
     }
 };
